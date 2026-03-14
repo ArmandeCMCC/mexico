@@ -9,7 +9,7 @@
 
 We want to answer a simple question: **can satellite imagery of nighttime lights predict power outages?**
 
-More precisely: for each of Mexico's ~2,457 municipalities, on each night between 2017 and 2021, we want to predict whether a power outage lasting 3 hours or more will occur. We do this using data that is freely and globally available — satellite nighttime light (NTL) imagery from NASA, supplemented by weather data — without requiring access to grid telemetry (SCADA) or utility company real-time feeds.
+More precisely: for each of Mexico's ~2,457 municipalities, on each night between 2017 and 2021, we want to predict whether a power outage lasting 3 hours or more will occur. We do this using data that is freely and globally available — satellite nighttime light (NTL) imagery from NASA, supplemented by weather data. 
 
 **Why this matters:** In many countries, granular outage data is unavailable, delayed, or unreliable. If satellite data can predict outages, it provides an independent monitoring tool for energy access, disaster response, and infrastructure planning — especially in data-scarce environments.
 
