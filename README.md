@@ -21,7 +21,7 @@ More precisely: for each of Mexico's ~2,457 municipalities, on each night betwee
 | **GHS-BUILT-S** (EU JRC) | Built-up surface fraction per pixel | Weights NTL extraction toward populated areas |
 | **Weather / ERA5** | Temperature, precipitation, wind, humidity, pressure | Complementary signal — weather causes outages |
 | **GADM v4.1** | Municipal boundaries (~2,457 polygons) | Spatial unit for aggregation |
-| **CFE outage records** | Outage start/end times, municipality, (recently) cause | Ground truth labels |
+| **outage records** | Outage start/end times, municipality, (recently) cause | Ground truth labels |
 
 **The panel:** We construct a daily municipality-level panel: ~2,457 municipalities x ~1,817 days = **4,464,369 rows**. Each row represents one municipality on one night, with NTL features, weather, and a binary label: did a >= 3h outage happen? Only about **0.5%** of rows are positive — this is an extremely imbalanced rare-event prediction problem.
 
@@ -69,10 +69,10 @@ At the last meeting, the main pipeline was:
 1. **Anomaly detection** on NTL time series (z-scores, rolling baselines)
 2. **Embeddings** (PCA, autoencoders) to compress NTL history
 3. **XGBoost classifier** producing raw scores
-4. **Learning-to-Rank (LTR)** trained with LambdaMART to directly optimize daily rankings
+4. **Learning-to-Rank (LTR)** trained with LambdaMART to directly optimise daily rankings
 5. Evaluation via **Recall@K**: each day, pick the top-K municipalities and check how many actual outages we caught
 
-This framing assumes a **fixed daily budget**: every day, a decision-maker inspects exactly K municipalities. LTR is well-suited for this because it optimizes ranking quality within each day group.
+This framing assumes a **fixed daily budget**: every day, a decision-maker inspects exactly K municipalities. LTR is well-suited for this because it optimises ranking quality within each day group.
 
 ### Why we shifted
 
@@ -85,7 +85,7 @@ The literature on rare-event prediction and operational decision-making motivate
 - **Decision curves and utility analysis:** If we know the relative cost of missing an outage vs. sending a false alert, we can derive the optimal threshold directly from the calibrated probabilities.
 - **Policy-based evaluation:** Instead of evaluating "did we catch X out of K?", we evaluate "under a policy of maximum 10 alerts/day, what fraction of outages do we catch, and at what precision?"
 
-**When is Top-K / LTR still relevant?** When a fixed budget constraint is genuinely imposed — e.g., a utility can only dispatch K inspection teams per day. In that case, LTR is better aligned because it directly optimizes within-day ranking. We keep LTR as a **secondary benchmark** for this scenario.
+**When is Top-K / LTR still relevant?** When a fixed budget constraint is genuinely imposed — e.g., a utility can only dispatch K inspection teams per day. In that case, LTR is better aligned because it directly optimises within-day ranking. We keep LTR as a **secondary benchmark** for this scenario.
 
 **Key point from the literature:** Good ranking (high ROC-AUC) does not imply good probabilities. Models like XGBoost and SVMs can rank well but produce severely distorted probability estimates. Post-hoc calibration (Platt, Beta, Isotonic) is needed to turn raw scores into honest probabilities. This is why calibration is central to the new pipeline.
 
@@ -98,7 +98,7 @@ The literature on rare-event prediction and operational decision-making motivate
 | **Output** | Calibrated probability [0, 1] | Ranking score (no probability interpretation) |
 | **Threshold** | Policy parameter (precision floor, alerts/day cap) | Fixed K |
 | **Evaluation** | PR-AUC, calibration metrics, decision curves | Recall@K, NDCG |
-| **Strengths** | Flexible, interpretable, composable | Directly optimizes ranking within daily groups |
+| **Strengths** | Flexible, interpretable, composable | Directly optimises ranking within daily groups |
 | **When to use** | Default — unless a fixed K is imposed | When inspecting exactly K units/day |
 
 ---
@@ -182,7 +182,7 @@ here is what each metric tells us:
 
 **Brier Score:** Mean squared error between predicted probability and actual outcome (0 or 1). Lower = better. Perfect calibration = prevalence x (1 - prevalence) ≈ 0.004. Our Platt-calibrated Brier = **0.0039**, essentially at the theoretical minimum.
 
-**Log-loss:** Like Brier, but penalizes confident wrong predictions more harshly. Raw XGBoost: **0.30**. After Platt calibration: **0.021**. This 93% improvement shows the raw model was making very confident but wrong probability statements.
+**Log-loss:** Like Brier, but penalises confident wrong predictions more harshly. Raw XGBoost: **0.30**. After Platt calibration: **0.021**. This 93% improvement shows the raw model was making very confident but wrong probability statements.
 
 **ECE (Expected Calibration Error):** We bin municipality-nights by predicted probability, and check whether the observed outage rate matches the predicted probability in each bin. ECE = 0.001 after Platt calibration means the predictions are essentially perfectly calibrated.
 
@@ -340,14 +340,14 @@ Same-day NTL features provide a **modest uplift** (+1.4pp ROC-AUC, +1pp recall).
 
 ### 8.2 Spatial Holdout: Southern Mexico (Guerrero, Oaxaca, Chiapas)
 
-**What is a spatial holdout?** A standard temporal split tests generalization to future time periods. A spatial holdout tests generalization to **unseen geographic regions** — municipalities the model has never trained on.
+**What is a spatial holdout?** A standard temporal split tests generalisation to future time periods. A spatial holdout tests generalisation to **unseen geographic regions** — municipalities the model has never trained on.
 
 **Why Guerrero, Oaxaca, Chiapas?** These three states in southern Mexico were chosen because they represent a **challenging test case**:
 - They are among the most rural and poorest states in Mexico
 - They have different grid infrastructure and outage patterns compared to the industrial north
 - They include areas prone to hurricanes (Pacific coast), earthquakes (Oaxaca), and limited electrification
 - Together they represent a substantial geographic block (~417,000 test rows)
-- Excluding them from training is a meaningful test — the model must generalize from the rest of Mexico to a region with different characteristics
+- Excluding them from training is a meaningful test — the model must generalise from the rest of Mexico to a region with different characteristics
 
 **Test design:** The model is trained and calibrated on all of Mexico *except* these three states. The test set consists *only* of these three states.
 
@@ -368,7 +368,7 @@ Same-day NTL features provide a **modest uplift** (+1.4pp ROC-AUC, +1pp recall).
   - **Genuinely harder prediction:** Rural municipalities with different grid infrastructure, different weather patterns, and sparser NTL data may be inherently harder to predict
   - **Distribution shift:** The model has never seen these municipalities' NTL baselines, so it cannot learn municipality-specific patterns
 
-- **This is a genuine limitation, not an artifact.** The model generalizes its ranking ability but not its calibrated probability levels to unseen regions. In deployment, one would need to re-calibrate for new regions, or accept lower precision/recall in under-represented areas. This is consistent with the literature on spatial generalization in remote sensing models.
+- **This is a genuine limitation, not an artifact.** The model generalises its ranking ability but not its calibrated probability levels to unseen regions. In deployment, one would need to re-calibrate for new regions, or accept lower precision/recall in under-represented areas. This is consistent with the literature on spatial generalisation in remote sensing models.
 
 ---
 
@@ -386,7 +386,7 @@ If the model predicts environmental outages better than technical ones, this is 
 
 ### 9.2 How Causes Enter the Panel
 
-Cause labels come from a detailed CFE file (`night_outages_3hrs_with_locations_clean_by_reason.csv`) where each outage event has a cause. Since our modeling unit is municipality-night (not individual outage events), we need to aggregate:
+Cause labels come from a detailed file (`night_outages_3hrs_with_locations_clean_by_reason.csv`) where each outage event has a cause. Since our modeling unit is municipality-night (not individual outage events), we need to aggregate:
 
 - **85.8%** of positive municipality-nights have a single outage → cause is unambiguous
 - **12.5%** have multiple outages of the same cause category → still unambiguous
@@ -468,7 +468,7 @@ This makes scientific sense:
 2. **Feature story:** NTL + weather is the dominant combination; spatial/anomaly/drop features add little in strict forecast mode
 3. **Calibration story:** Post-hoc calibration (Platt) is essential — raw XGBoost scores are useless as probabilities
 4. **Cause-specific story:** Environmental outages are significantly more predictable, confirming the NTL+weather signal pathway
-5. **Robustness:** Temporally stable, not driven by Texas shock, ranking generalizes spatially (but calibration does not)
+5. **Robustness:** Temporally stable, not driven by Texas shock, ranking generalises spatially (but calibration does not)
 6. **Secondary benchmark:** LTR / top-K retained as comparator for fixed-budget scenarios
 
 ---
@@ -539,7 +539,7 @@ These are **different operational policies**, so precision/recall numbers are no
 
 | Scenario | Better approach | Why |
 |----------|----------------|-----|
-| "Inspect exactly 10 municipalities per day, every day" | **LTR** | Directly optimizes within-day ranking for fixed K |
+| "Inspect exactly 10 municipalities per day, every day" | **LTR** | Directly optimises within-day ranking for fixed K |
 | "Alert when risk exceeds a threshold; some days 5, others 20" | **Binary + calibration** | Flexible, probability-based, adapts to daily risk |
 | "Communicate risk levels to decision-makers" | **Binary + calibration** | Probabilities are interpretable; ranking scores are not |
 | "Feed into a downstream severity model" | **Binary + calibration** | P(outage) is a meaningful input; rank position is not |
@@ -595,11 +595,11 @@ The two approaches are complementary, not competing. The calibrated binary class
 | **Recall** | Among actual outages, what fraction did the model catch? |
 | **Ablation** | Removing groups of features to see which ones actually matter. |
 | **Temporal split** | Training on past data, testing on future data — prevents the model from "seeing the future." |
-| **Spatial holdout** | Training on some regions, testing on others — tests geographic generalization. |
+| **Spatial holdout** | Training on some regions, testing on others — tests geographic generalisation. |
 | **NTL** | Nighttime lights — satellite-measured brightness of the Earth's surface at night. |
 | **Prevalence** | The fraction of positive cases (outage-nights) in the dataset. Here: ~0.5%. |
 | **scale_pos_weight** | Tells the model how much more important it is to correctly detect a positive (outage) than a negative (no outage). |
-| **LTR (Learning-to-Rank)** | A model trained to rank items within groups (here: municipalities within each day) rather than predicting probabilities. Optimizes ranking metrics like NDCG. |
+| **LTR (Learning-to-Rank)** | A model trained to rank items within groups (here: municipalities within each day) rather than predicting probabilities. Optimises ranking metrics like NDCG. |
 | **Top-K** | A decision rule: each day, alert the K highest-ranked municipalities. Assumes a fixed daily budget. |
 | **Lift@K** | How much better the top-K shortlist concentrates outages compared to random selection. Lift@10 = 25 means 25x the base rate. |
 | **Hurdle model** | A two-part model: first predict whether an event occurs (binary), then predict its magnitude (count/duration) conditional on occurrence. |
