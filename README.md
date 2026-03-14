@@ -166,7 +166,7 @@ All metrics are computed on the test set (July 2020 - December 2021), which the 
 
 ## 4. Understanding the Evaluation Metrics
 
-For a non-ML audience, here is what each metric tells us:
+here is what each metric tells us:
 
 ### Discrimination metrics: can the model tell outages apart from non-outages?
 
@@ -579,7 +579,7 @@ The two approaches are complementary, not competing. The calibrated binary class
 | LTR run | `runs/ltr/20260220_114434/` |
 | Literature review | `ML_outages_litreview.pdf` |
 
-## Appendix B: Glossary for Non-ML Readers
+## Appendix B: Glossary
 
 | Term | Plain-language meaning |
 |------|----------------------|
