@@ -323,7 +323,7 @@ Same-day NTL features provide a **modest uplift** (+1.4pp ROC-AUC, +1pp recall).
 
 ## 8. Robustness and Sensitivity Tests
 
-### 8.1 Texas Cold Snap (February 15-17, 2021)
+### 8.1 Texas sensitivity (February 15-17, 2021)
 
 **What happened:** In February 2021, a severe winter storm (Uri) caused catastrophic power failures in Texas and cascading outages in northern Mexico (Chihuahua, Nuevo León, Tamaulipas). This was an extreme, unprecedented event.
 
@@ -463,7 +463,7 @@ This makes scientific sense:
 - Detect planned maintenance or crime-related outages
 - Replace real-time grid monitoring (SCADA) or operational utility systems
 
-### Current thesis structure:
+### Current structure:
 1. **Primary contribution:** Calibrated probabilistic forecasting with NTL as core signal
 2. **Feature story:** NTL + weather is the dominant combination; spatial/anomaly/drop features add little in strict forecast mode
 3. **Calibration story:** Post-hoc calibration (Platt) is essential — raw XGBoost scores are useless as probabilities
