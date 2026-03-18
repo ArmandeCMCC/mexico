@@ -7,7 +7,7 @@
 
 ## 1. Recap: What the Project Does
 
-We want to answer a simple question: **can satellite imagery of nighttime lights predict power outages?**
+We want to answer the following question: **can satellite imagery of nighttime lights predict power outages?**
 
 More precisely: for each of Mexico's ~2,457 municipalities, on each night between 2017 and 2021, we want to predict whether a power outage lasting 3 hours or more will occur. We do this using data that is freely and globally available — satellite nighttime light (NTL) imagery from NASA, supplemented by weather data. 
 
