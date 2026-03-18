@@ -547,7 +547,7 @@ These are **different operational policies**, so precision/recall numbers are no
 
 ### Bottom line
 
-The two approaches are complementary, not competing. The calibrated binary classifier is the **primary model** because it is more general, interpretable, and composable. LTR is a **secondary benchmark** that validates performance under a specific (fixed-K) operational constraint. Both confirm that the underlying NTL + weather features carry substantial predictive signal.
+The two approaches are complementary => we keep both for different objectives. The calibrated binary classifier is the **primary model** because it is more general, interpretable, and composable. LTR is a **secondary benchmark** that validates performance under a specific (fixed-K) operational constraint. Both confirm that the underlying NTL + weather features carry substantial predictive signal.
 
 ---
 
