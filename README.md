@@ -150,11 +150,11 @@ This ensures honest estimates of deployment performance.
 
 ### Step 5: Threshold selection — the policy decision
 
-A calibrated probability by itself doesn't make a binary alert decision. We need a **threshold**: "alert if probability > T." The choice of T is a **policy decision**, not a statistical optimization:
+A calibrated probability by itself doesn't make a binary alert decision. We need a **threshold**: "alert if probability > T." The choice of T is a **policy decision**, not a statistical optimisation:
 
 - **"We can handle at most 10 alerts per day"** → Pick T so that, on average, 10 municipalities per day exceed it. This yields T = 0.11 in our case.
 - **"We need at least 10% of alerts to be true outages"** → Pick T to achieve >= 10% precision. This yields T = 0.079.
-- **"Maximize overall balance between precision and recall"** → Pick T to maximize F1. This yields T = 0.057, with more alerts but more catches.
+- **"Maximise overall balance between precision and recall"** → Pick T to maximize F1. This yields T = 0.057, with more alerts but more catches.
 
 **Key insight:** The threshold is not "the model's decision" — it's the decision-maker's choice. The model provides calibrated risk estimates; the threshold converts them into alerts based on operational constraints. This is fundamentally different from top-K, where the decision rule (pick K per day) is baked into the evaluation.
 
@@ -362,7 +362,7 @@ Same-day NTL features provide a **modest uplift** (+1.4pp ROC-AUC, +1pp recall).
 
 - **ROC-AUC retention is strong (98.5%):** The model's ability to *rank* municipality-nights by risk transfers well to unseen geography. If you ask "which municipality in the South is most at risk tonight?", the model's ranking is nearly as good as for the national set.
 
-- **PR-AUC and recall drop substantially.** This is driven by **multiple interacting factors**:
+- **PR-AUC and recall drop substantially.** So calibration does not transfer. This is driven by **multiple interacting factors**:
   - **Lower prevalence** in the South (0.23% vs 0.40%) mechanically depresses PR-AUC even at equal discrimination
   - **Calibration mismatch:** The threshold of 0.11 was calibrated on national data; the South may have different risk levels, making this threshold too strict
   - **Genuinely harder prediction:** Rural municipalities with different grid infrastructure, different weather patterns, and sparser NTL data may be inherently harder to predict
@@ -553,11 +553,15 @@ The two approaches are complementary, not competing. The calibrated binary class
 
 ## 13. Next Steps
 
-1. **Rebuild panel** with additional label columns (total duration, cause-specific counts, mixed-cause flag) — code is ready, awaiting panel rebuild with NTL data
+1. **Rebuild panel** with additional label columns (total duration, cause-specific counts, mixed-cause flag): done 
 2. **Mixed-cause sensitivity** for cause-specific evaluation (expected minimal impact given 1.7% ambiguity rate)
 3. **Count modeling** (n_outages | outage occurred): Hurdle model — Poisson/NB on positives only
 4. **Duration/severity modeling** (total_length_min | outage occurred): Log-normal regression on positives
 5. **Decomposed expected burden:** E[total disruption] = P(outage) x E[duration | outage]
+
+6. **Add a logistic regression baseline** to not just compare XGBoost variants against each other and against LTR (e.g.  logistic regression on the same features) to see if Gradient Boosting is actually doing a good job
+7. **Switch to block bootstrap (by week or state-week) for CIs** because right now, bootstraps resample municipality-nights as if they were independent but they cluster in time and in space
+8. **Plot the reliability diagram in the 0-10% predicted probability range** to confirm that Platt well-calibrated where it matters and not only on average
 
 ---
 
