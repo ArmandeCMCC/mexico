@@ -267,8 +267,9 @@ FEATURE_FAMILIES <- list(
   ),
 
   # CENACE PRICES: substation-level price/congestion features (forecast-safe)
-  # All columns use lag1/lag7 values from CENACE marginal node prices,
-  # aggregated from substation to municipality. Captures local grid stress
+  # Columns use lag1/lag7 values from CENACE marginal node prices plus
+  # lagged rolling summaries (shifted to t-1), aggregated from substation
+  # to municipality. Captures local grid stress
   # (congestion), demand pressure (peak/offpeak), and price anomalies.
   # Coverage: ~30% of panel (municipalities with CENACE substations).
   cenace_prices = list(
@@ -276,7 +277,7 @@ FEATURE_FAMILIES <- list(
     exclude = NULL,
     no_leakage_risk = TRUE,
     usable_in_05b = TRUE,
-    description = "CENACE substation price/congestion features (lag1/lag7, forecast-safe)"
+    description = "CENACE substation price/congestion features (lagged + lagged rolling, forecast-safe)"
   )
 )
 

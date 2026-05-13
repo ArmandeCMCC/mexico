@@ -12,7 +12,7 @@
 #   - data/model_ready/gid2_agem_crosswalk.rds (reusable crosswalk)
 #
 # Design:
-#   - All price features use LAG1 columns from Luis's panel (forecast-safe)
+#   - All price features are forecast-safe (t-1 or earlier)
 #   - Aggregated from ss_node to agem (municipality) via mean/max/sd
 #   - Joined to our panel via GID_2 <-> agem crosswalk
 #   - Municipalities without substations -> NA (XGBoost handles natively)
@@ -192,7 +192,7 @@ cat("\n--- Part 2: Aggregating price features ---\n")
 
 dt <- as.data.table(node_panel)
 
-# Use only FORECAST-SAFE features (lag1/lag7 + rolling)
+# Use only FORECAST-SAFE features (lag1/lag7 + lagged rolling)
 # Same-day prices would be leakage (prices observed same day as outage)
 price_lag_cols <- c(
   "price_mean_lag1", "price_mean_lag7",
@@ -206,9 +206,14 @@ price_lag_cols <- c(
 # Verify these columns exist
 stopifnot(all(price_lag_cols %in% names(dt)))
 
-# Also include rolling features (these use past data, forecast-safe)
-rolling_cols <- c("price_roll7", "price_dev_roll7")
-stopifnot(all(rolling_cols %in% names(dt)))
+# Build strict t-1 rolling features per substation.
+# In Luis's panel, price_roll7 and price_dev_roll7 include day t.
+# We shift them by one day so predictors at date t use only information from <= t-1.
+setorderv(dt, c("ss_node", "date"))
+stopifnot(all(c("price_roll7", "price_dev_roll7") %in% names(dt)))
+dt[, price_roll7_lag1 := shift(price_roll7, n = 1L, type = "lag"), by = ss_node]
+dt[, price_dev_roll7_lag1 := shift(price_dev_roll7, n = 1L, type = "lag"), by = ss_node]
+rolling_cols <- c("price_roll7_lag1", "price_dev_roll7_lag1")
 
 all_price_cols <- c(price_lag_cols, rolling_cols)
 
@@ -225,6 +230,14 @@ agg_mean <- dt[, lapply(.SD, mean, na.rm = TRUE), by = .(agem, date), .SDcols = 
 old_names <- all_price_cols
 new_names_mean <- paste0("cenace_", old_names)
 setnames(agg_mean, old_names, new_names_mean)
+
+# Backward-compatible names: keep existing cenace_price_roll7* column names,
+# but now they contain strict t-1 values.
+setnames(
+  agg_mean,
+  c("cenace_price_roll7_lag1", "cenace_price_dev_roll7_lag1"),
+  c("cenace_price_roll7", "cenace_price_dev_roll7")
+)
 
 # Max congestion (captures worst bottleneck in municipality)
 agg_cong_max <- dt[, .(
@@ -266,6 +279,17 @@ cat("Saving backup: features_engineered_pre_prices.rds\n")
 saveRDS(fe, "data/model_ready/features_engineered_pre_prices.rds")
 
 fe <- as.data.table(fe)
+
+# Idempotency guard: remove previously merged cenace columns before re-merging.
+# This prevents duplicate suffix columns (e.g., .x/.y) on reruns.
+existing_cenace <- grep("^cenace_", names(fe), value = TRUE)
+if (length(existing_cenace) > 0) {
+  cat("Dropping", length(existing_cenace), "existing cenace_* columns before merge\n")
+  fe[, (existing_cenace) := NULL]
+}
+if ("agem" %in% names(fe)) {
+  fe[, agem := NULL]
+}
 
 # Add agem via crosswalk
 fe <- merge(fe, as.data.table(crosswalk), by = "GID_2", all.x = TRUE)
