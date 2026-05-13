@@ -17,6 +17,7 @@ suppressPackageStartupMessages({
   library(jsonlite)
   library(yardstick)
   library(glmnet)
+  library(xgboost)
 })
 
 set.seed(42)
@@ -616,36 +617,155 @@ decision_table <- tibble(
 
 message("  Decision table built")
 
-# STEP 11: XGBOOST COMPARISON TABLE
+# STEP 11: XGBOOST COMPARISON TABLE (FAIR — same complete-case test rows)
+#
+# LR can only predict on complete-case rows (no NA handling).
+# XGB handles NAs natively, so its metrics from run_config.json are on ALL test rows.
+# For a fair comparison, we re-train XGB and evaluate on the SAME complete-case subset.
+# XGB is trained on ALL training rows (its natural advantage), then predicted on
+# the complete-case test rows used by LR.
 
 message("\n", strrep("-", 60))
-message("STEP 11: XGBoost comparison")
+message("STEP 11: XGBoost comparison (fair — same test rows)")
 message(strrep("-", 60))
 
 xgb_config <- read_json(xgb_config_path)
 
-# Extract XGBoost results from run_config.json
-xgb_results <- xgb_config$results
-xgb_roc_auc <- xgb_results$roc_auc_test %||% NA_real_
-xgb_pr_auc  <- xgb_results$pr_auc_test %||% NA_real_
-xgb_brier   <- xgb_results$brier_test_platt %||% (xgb_results$brier_test %||% NA_real_)
-xgb_logloss <- xgb_results$logloss_test_platt %||% (xgb_results$logloss_test %||% NA_real_)
-xgb_ece     <- xgb_results$ece_equal_test_platt %||% (xgb_results$ece_equal_test %||% NA_real_)
-xgb_f1      <- xgb_results$f1_test_at_best_t %||% NA_real_
+# Save XGB all-rows metrics for reference
+xgb_results_allrows <- xgb_config$results
+xgb_roc_auc_allrows <- as.numeric(xgb_results_allrows$roc_auc_test %||% NA_real_)
+message("  XGB ROC-AUC (all test rows): ", sprintf("%.4f", xgb_roc_auc_allrows))
+
+# Re-train XGB on ALL training rows with same hyperparams, then evaluate on
+# complete-case test rows for fair comparison with LR.
+xgb_params <- xgb_config$xgb_params
+xgb_tree_depth <- as.integer(xgb_params$tree_depth %||% 6)
+xgb_trees      <- as.integer(xgb_params$trees %||% 500)
+xgb_learn_rate <- as.numeric(xgb_params$learn_rate %||% 0.05)
+
+message("  Training XGB on ALL training rows for fair comparison...")
+message("    Params: depth=", xgb_tree_depth, " trees=", xgb_trees, " lr=", xgb_learn_rate)
+
+# Build full training matrix (ALL rows, XGB handles NAs)
+train_all <- prep_model_df(train_raw, feature_cols_use)
+train_all_y <- train_all$outage_3h_or_more
+train_all_X <- as.matrix(train_all %>% select(-outage_3h_or_more))
+
+n_pos_train <- sum(train_all_y == 1L, na.rm = TRUE)
+n_neg_train <- sum(train_all_y == 0L, na.rm = TRUE)
+spw <- n_neg_train / max(n_pos_train, 1)
+
+dtrain_xgb <- xgboost::xgb.DMatrix(data = train_all_X, label = train_all_y)
+
+t_xgb_start <- proc.time()
+xgb_fair <- xgboost::xgb.train(
+  params = list(
+    objective = "binary:logistic",
+    eval_metric = "auc",
+    max_depth = xgb_tree_depth,
+    eta = xgb_learn_rate,
+    subsample = 0.8,
+    colsample_bytree = 0.8,
+    min_child_weight = 10,
+    scale_pos_weight = spw
+  ),
+  data = dtrain_xgb,
+  nrounds = xgb_trees,
+  verbose = 0
+)
+t_xgb_elapsed <- (proc.time() - t_xgb_start)[["elapsed"]]
+message("  XGB trained in ", sprintf("%.1f", t_xgb_elapsed / 60), " min")
+
+# Predict on COMPLETE-CASE test rows (same as LR)
+test_X_matrix <- as.matrix(test_df %>% select(all_of(feature_cols_use)))
+xgb_test_prob_raw <- predict(xgb_fair, xgboost::xgb.DMatrix(data = test_X_matrix))
+message("  XGB predictions on complete-case test: n=", length(xgb_test_prob_raw))
+
+# Platt calibration on COMPLETE-CASE validation rows (same as LR)
+val_X_matrix <- as.matrix(val_df %>% select(all_of(feature_cols_use)))
+xgb_val_prob_raw <- predict(xgb_fair, xgboost::xgb.DMatrix(data = val_X_matrix))
+
+eps_platt <- 1e-15
+xgb_val_logit <- qlogis(pmin(pmax(xgb_val_prob_raw, eps_platt), 1 - eps_platt))
+platt_fit_xgb <- glm(y ~ logit_p,
+                      family = binomial,
+                      data = data.frame(y = val_df$outage_3h_or_more, logit_p = xgb_val_logit))
+xgb_platt_intercept <- coef(platt_fit_xgb)[1]
+xgb_platt_slope     <- coef(platt_fit_xgb)[2]
+message("  XGB Platt params (complete-case val): intercept=", sprintf("%.4f", xgb_platt_intercept),
+        ", slope=", sprintf("%.4f", xgb_platt_slope))
+
+xgb_test_logit <- qlogis(pmin(pmax(xgb_test_prob_raw, eps_platt), 1 - eps_platt))
+xgb_test_prob_platt <- plogis(xgb_platt_intercept + xgb_platt_slope * xgb_test_logit)
+
+# Compute XGB metrics on complete-case test (fair comparison)
+xgb_truth_fac <- factor(if_else(test_y == 1L, "1", "0"), levels = c("1", "0"))
+xgb_prob_tbl  <- tibble(.pred_1 = xgb_test_prob_platt, truth = xgb_truth_fac)
+
+xgb_cc_roc_auc <- roc_auc(xgb_prob_tbl, truth, .pred_1, event_level = "first")$.estimate
+xgb_cc_pr_auc  <- pr_auc(xgb_prob_tbl, truth, .pred_1, event_level = "first")$.estimate
+xgb_cc_brier   <- mean((xgb_test_prob_platt - test_y)^2)
+xgb_cc_logloss <- compute_logloss(test_y, xgb_test_prob_platt)
+
+# ECE (equal-width bins)
+xgb_cc_ece <- {
+  bins <- cut(xgb_test_prob_platt, breaks = seq(0, 1, length.out = 11), include.lowest = TRUE)
+  bin_df <- data.frame(bin = bins, prob = xgb_test_prob_platt, y = test_y)
+  bin_stats <- aggregate(cbind(prob, y) ~ bin, data = bin_df, FUN = mean)
+  bin_n     <- aggregate(y ~ bin, data = bin_df, FUN = length)
+  sum(bin_n$y / length(xgb_test_prob_platt) * abs(bin_stats$prob - bin_stats$y))
+}
+
+# Threshold selection on val (same approach as LR): maximize F1
+xgb_val_truth_fac <- factor(if_else(val_df$outage_3h_or_more == 1L, "1", "0"), levels = c("1", "0"))
+thresholds_xgb <- seq(0.005, 0.30, by = 0.001)
+best_f1_xgb <- -1
+best_t_xgb <- 0.05
+for (tt in thresholds_xgb) {
+  pred_class <- factor(if_else(xgb_val_prob_raw >= tt, "1", "0"), levels = c("1", "0"))
+  tp <- sum(pred_class == "1" & xgb_val_truth_fac == "1")
+  fp <- sum(pred_class == "1" & xgb_val_truth_fac == "0")
+  fn <- sum(pred_class == "0" & xgb_val_truth_fac == "1")
+  prec <- tp / max(tp + fp, 1)
+  rec  <- tp / max(tp + fn, 1)
+  f1   <- if (prec + rec > 0) 2 * prec * rec / (prec + rec) else 0
+  if (f1 > best_f1_xgb) { best_f1_xgb <- f1; best_t_xgb <- tt }
+}
+xgb_cc_pred <- as.integer(xgb_test_prob_raw >= best_t_xgb)
+xgb_cc_tp <- sum(xgb_cc_pred == 1L & test_y == 1L)
+xgb_cc_fp <- sum(xgb_cc_pred == 1L & test_y == 0L)
+xgb_cc_fn <- sum(xgb_cc_pred == 0L & test_y == 1L)
+xgb_cc_precision <- xgb_cc_tp / max(xgb_cc_tp + xgb_cc_fp, 1)
+xgb_cc_recall    <- xgb_cc_tp / max(xgb_cc_tp + xgb_cc_fn, 1)
+xgb_cc_f1 <- if (xgb_cc_precision + xgb_cc_recall > 0) {
+  2 * xgb_cc_precision * xgb_cc_recall / (xgb_cc_precision + xgb_cc_recall)
+} else 0
+xgb_cc_alerts_per_day <- sum(xgb_cc_pred) / n_test_days
+
+message("  XGB on complete-case test: ROC-AUC=", sprintf("%.4f", xgb_cc_roc_auc),
+        " (vs all-rows: ", sprintf("%.4f", xgb_roc_auc_allrows), ")")
 
 comparison <- tibble(
   metric = c("roc_auc", "pr_auc", "brier_score", "logloss", "ece_equal",
              "f1", "precision", "recall", "alerts_per_day"),
   xgboost_value = c(
-    as.numeric(xgb_roc_auc),
-    as.numeric(xgb_pr_auc),
-    as.numeric(xgb_brier),
-    as.numeric(xgb_logloss),
-    as.numeric(xgb_ece),
-    as.numeric(xgb_f1),
-    NA_real_,
-    NA_real_,
-    NA_real_
+    xgb_cc_roc_auc,
+    xgb_cc_pr_auc,
+    xgb_cc_brier,
+    xgb_cc_logloss,
+    xgb_cc_ece,
+    xgb_cc_f1,
+    xgb_cc_precision,
+    xgb_cc_recall,
+    xgb_cc_alerts_per_day
+  ),
+  xgboost_allrows = c(
+    xgb_roc_auc_allrows,
+    as.numeric(xgb_results_allrows$pr_auc_test %||% NA_real_),
+    as.numeric(xgb_results_allrows$brier_test_platt %||% NA_real_),
+    as.numeric(xgb_results_allrows$logloss_test_platt %||% NA_real_),
+    as.numeric(xgb_results_allrows$ece_equal_test_platt %||% NA_real_),
+    NA_real_, NA_real_, NA_real_, NA_real_
   ),
   logistic_value = c(
     roc_auc_test,
@@ -663,21 +783,9 @@ comparison <- tibble(
     delta = logistic_value - xgboost_value
   )
 
-# Try to fill in XGBoost precision/recall/alerts from deployment decision table
-xgb_deploy_path <- file.path(xgb_run_dir, "deployment_decision_table.csv")
-if (file.exists(xgb_deploy_path)) {
-  xgb_deploy <- read_csv(xgb_deploy_path, show_col_types = FALSE)
-  xgb_default <- xgb_deploy %>% filter(role == "default", method == "platt") %>% slice(1)
-  if (nrow(xgb_default) > 0) {
-    comparison$xgboost_value[comparison$metric == "precision"] <- as.numeric(xgb_default$precision)
-    comparison$xgboost_value[comparison$metric == "recall"]    <- as.numeric(xgb_default$recall)
-    comparison$xgboost_value[comparison$metric == "f1"]        <- as.numeric(xgb_default$f1)
-    comparison$xgboost_value[comparison$metric == "alerts_per_day"] <- as.numeric(xgb_default$alerts_per_day)
-    comparison <- comparison %>% mutate(delta = logistic_value - xgboost_value)
-  }
-}
-
-message("  Comparison table built (", nrow(comparison), " metrics)")
+message("  Comparison table built (", nrow(comparison), " metrics, fair same-row comparison)")
+message("  Note: xgboost_value = XGB on complete-case test (same rows as LR)")
+message("        xgboost_allrows = XGB on all test rows (from original run)")
 for (i in seq_len(nrow(comparison))) {
   r <- comparison[i, ]
   delta_str <- if (!is.na(r$delta)) sprintf("%+.4f", r$delta) else "NA"
