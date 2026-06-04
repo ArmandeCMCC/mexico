@@ -1,0 +1,8 @@
+ablation_name,run_id,n_features_raw,n_features_eligible,n_features_used,feature_guardrail_status,feature_guardrail_pass,feature_guardrail_msg
+full_model,20260302_122518_forecast_strict_full_model,67,67,66,pass,TRUE,ok
+ntl_only,20260302_123733_forecast_strict_ntl_only,34,34,33,pass,TRUE,ok
+ntl_core,20260302_124747_forecast_strict_ntl_core,27,27,26,pass,TRUE,ok
+ntl_plus_spatial,20260302_125755_forecast_strict_ntl_plus_spatial,31,31,30,pass,TRUE,ok
+ntl_plus_drops,20260302_130814_forecast_strict_ntl_plus_drops,29,29,28,pass,TRUE,ok
+weather_lagged_only,20260302_131921_forecast_strict_weather_lagged_only,48,48,47,pass,TRUE,ok
+ntl_plus_weather,20260302_133031_forecast_strict_ntl_plus_weather,63,63,62,pass,TRUE,ok

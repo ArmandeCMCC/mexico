@@ -1,0 +1,67 @@
+Ablation Validation Report
+=========================
+
+Batch directory: /Users/armandeaboudrar-meda/Desktop/CMCC/outages_nightlights/mexico/data/baselines/binary_threshold/ablation_batches/20260302_122455
+Manifest: /Users/armandeaboudrar-meda/Desktop/CMCC/outages_nightlights/mexico/data/baselines/binary_threshold/ablation_batches/20260302_122455/ablation_manifest.csv
+Successful runs: 7
+
+Required files check
+--------------------
+All required files present for all successful runs: TRUE
+
+Config consistency checks
+-------------------------
+All comparability checks pass: TRUE
+
+Feature guardrail check
+-----------------------
+All guardrail checks pass: TRUE
+  Pass: 7
+  Fail: 0
+  Missing data: 0
+
+Detailed config checks:
+  - task_mode: passes=TRUE, values=forecast
+  - strict_enabled: passes=TRUE, values=TRUE
+  - strict_ratio: passes=TRUE, values=0.5
+  - raw_use_threshold_select_only: passes=TRUE, values=FALSE
+  - default_calibrated_method: passes=TRUE, values=platt
+  - secondary_calibrated_method: passes=TRUE, values=beta
+  - benchmark_binary_methods: passes=TRUE, values=raw,platt,beta
+  - train_start: passes=TRUE, values=2017-01-01
+  - train_end: passes=TRUE, values=2019-12-31
+  - val_start: passes=TRUE, values=2020-01-01
+  - val_end: passes=TRUE, values=2020-06-30
+  - test_start: passes=TRUE, values=2020-07-01
+  - test_end: passes=TRUE, values=2021-12-31
+  - train_rows: passes=TRUE, values=2683044
+  - val_rows: passes=TRUE, values=447174
+  - test_rows: passes=TRUE, values=1334151
+  - val_days: passes=TRUE, values=182
+  - test_days: passes=TRUE, values=543
+  - reference_policy_type: passes=TRUE, values=precision_floor
+  - reference_policy_target: passes=TRUE, values=0.1
+
+Top ablation by recall at headline policy
+----------------------------------------
+Ablation: ntl_plus_weather
+Features used: 62
+PR AUC (test): 0.0517
+ROC AUC (test): 0.8724
+Default method: platt
+Recall @ policy: 0.1798
+Precision @ policy: 0.0843
+F1 @ policy: 0.1148
+Alerts/day @ policy: 21.02
+Deployment ready: TRUE
+
+Files written
+-------------
+validation_required_files.csv
+validation_config_checks.csv
+validation_feature_guardrail.csv
+ablation_summary_table.csv
+ablation_leaderboard.csv           (combined, sorted by recall)
+ablation_leaderboard_by_recall.csv (headline operational comparison)
+ablation_leaderboard_by_pr_auc.csv (secondary discrimination comparison)
+validation_report.txt
