@@ -1,0 +1,164 @@
+{
+  "run_id": "20260513_sync_history_load",
+  "script": "14b_xgb_cause_stratified.R",
+  "timestamp": "2026-05-13 17:01:56",
+  "seed": 42,
+  "binary_model": {
+    "type": "xgboost",
+    "params": {
+      "trees": 500,
+      "tree_depth": 6,
+      "min_n": 10,
+      "loss_reduction": 0,
+      "sample_size": 0.8,
+      "mtry": 0.8,
+      "learn_rate": 0.05
+    },
+    "n_features": 101,
+    "test_roc_auc": 0.9138,
+    "benchmark_roc_auc": 0.92,
+    "platt_intercept": -4.5573,
+    "platt_slope": 0.8787
+  },
+  "count_model": {
+    "type": "xgb_count_poisson",
+    "objective": "count:poisson",
+    "n_features": 101,
+    "test_MAE": 0.4866,
+    "test_RMSE": 1.8453,
+    "test_corr": 0.0922,
+    "overdispersion": 2.5804
+  },
+  "severity_models": {
+    "overall": {
+      "model": "xgb_overall",
+      "n_train": 15951,
+      "n_test": 5350,
+      "smearing_factor": 1.1273,
+      "MAE_original": 952.2256,
+      "RMSE_original": 4793.7562,
+      "MAE_winsorized_99": 751.721,
+      "RMSE_winsorized_99": 2355.6344,
+      "correlation": 0.179,
+      "winsorize_cap_min": 18995.01
+    },
+    "environmental": {
+      "model": "xgb_environmental",
+      "n_train": 12738,
+      "n_test": 4150,
+      "smearing_factor": 1.1107,
+      "MAE_original": 725.8058,
+      "RMSE_original": 3963.6737,
+      "MAE_winsorized_99": 568.9731,
+      "RMSE_winsorized_99": 1290.3755,
+      "correlation": 0.1276,
+      "winsorize_cap_min": 9640.36
+    },
+    "technical": {
+      "model": "xgb_technical",
+      "n_train": 2601,
+      "n_test": 1055,
+      "smearing_factor": 1.0079,
+      "MAE_original": 1372.3519,
+      "RMSE_original": 5811.0614,
+      "MAE_winsorized_99": 1287.8068,
+      "RMSE_winsorized_99": 5075.2645,
+      "correlation": 0.3334,
+      "winsorize_cap_min": 38813.54
+    }
+  },
+  "cause_stratified_lift": {
+    "per_cause": [
+      {
+        "cause": "Environmental",
+        "n": 4150,
+        "MAE_overall": 724.1353,
+        "RMSE_overall": 3968.1544,
+        "MAE_matched": 725.8058,
+        "RMSE_matched": 3963.6737,
+        "cor_overall": 0.1059,
+        "cor_matched": 0.1276,
+        "MAE_lift_pct": -0.2307,
+        "RMSE_lift_pct": 0.1129
+      },
+      {
+        "cause": "Other",
+        "n": 31,
+        "MAE_overall": 18036.5767,
+        "RMSE_overall": 26653.789,
+        "MAE_matched": 18036.5767,
+        "RMSE_matched": 26653.789,
+        "cor_overall": 0.4574,
+        "cor_matched": 0.4574,
+        "MAE_lift_pct": 0,
+        "RMSE_lift_pct": 0
+      },
+      {
+        "cause": "Planned",
+        "n": 98,
+        "MAE_overall": 462.1995,
+        "RMSE_overall": 1936.6675,
+        "MAE_matched": 462.1995,
+        "RMSE_matched": 1936.6675,
+        "cor_overall": -0.0799,
+        "cor_matched": -0.0799,
+        "MAE_lift_pct": 0,
+        "RMSE_lift_pct": 0
+      },
+      {
+        "cause": "Technical",
+        "n": 1055,
+        "MAE_overall": 1399.5731,
+        "RMSE_overall": 5775.5478,
+        "MAE_matched": 1372.3519,
+        "RMSE_matched": 5811.0614,
+        "cor_overall": 0.311,
+        "cor_matched": 0.3334,
+        "MAE_lift_pct": 1.945,
+        "RMSE_lift_pct": -0.6149
+      },
+      {
+        "n": 16,
+        "MAE_overall": 516.6529,
+        "RMSE_overall": 944.803,
+        "MAE_matched": 516.6529,
+        "RMSE_matched": 944.803,
+        "cor_overall": 0.3194,
+        "cor_matched": 0.3194,
+        "MAE_lift_pct": 0,
+        "RMSE_lift_pct": 0
+      },
+      {
+        "cause": "ALL_positives",
+        "n": 5350,
+        "MAE_overall": 952.2256,
+        "RMSE_overall": 4793.7562,
+        "MAE_matched": 948.1535,
+        "RMSE_matched": 4799.3408,
+        "cor_overall": 0.179,
+        "cor_matched": 0.1708,
+        "MAE_lift_pct": 0.4276,
+        "RMSE_lift_pct": -0.1165
+      }
+    ]
+  },
+  "aggregate_correlations": {
+    "count_monthly": 0.7598,
+    "count_state": 0.9417,
+    "minutes_monthly": 0.5466,
+    "minutes_state": 0.7576
+  },
+  "data": {
+    "train_rows": 2683044,
+    "test_rows": 1334151,
+    "train_positives": 15951,
+    "test_positives": 5350,
+    "sev_train_overall": 15951,
+    "sev_test_overall": 5350,
+    "sev_train_env": 12738,
+    "sev_test_env": 4150,
+    "sev_train_tech": 2601,
+    "sev_test_tech": 1055
+  },
+  "output_dir": "/Users/armandeaboudrar-meda/Desktop/CMCC/outages_nightlights/mexico/data/baselines/binary_threshold/20260513_sync_history_load/two_part_xgb_cause"
+}

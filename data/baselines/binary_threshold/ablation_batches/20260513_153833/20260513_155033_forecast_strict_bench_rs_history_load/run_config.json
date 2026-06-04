@@ -1,0 +1,127 @@
+{
+  "run_id": "20260513_155033_forecast_strict_bench_rs_history_load",
+  "task_mode": "forecast",
+  "timestamp": "2026-05-13 16:03:20",
+  "seed": 42,
+  "data": {
+    "features_path": "/Users/armandeaboudrar-meda/Desktop/CMCC/outages_nightlights/mexico/data/model_ready/features_engineered.rds",
+    "splits_fixed_path": "/Users/armandeaboudrar-meda/Desktop/CMCC/outages_nightlights/mexico/data/model_ready/splits_fixed.rds",
+    "train_rows": 2683044,
+    "val_rows": 447174,
+    "test_rows": 1334151,
+    "val_days": 182,
+    "test_days": 543,
+    "train_prevalence": 0.0059,
+    "val_prevalence": 0.0038,
+    "test_prevalence": 0.004
+  },
+  "splits": {
+    "train": {
+      "start": "2017-01-01",
+      "end": "2019-12-31"
+    },
+    "val": {
+      "start": "2020-01-01",
+      "end": "2020-06-30"
+    },
+    "test": {
+      "start": "2020-07-01",
+      "end": "2021-12-31"
+    }
+  },
+  "model": {
+    "type": "xgboost",
+    "n_features": 101,
+    "scale_pos_weight": 167.2054,
+    "params": {
+      "trees": 500,
+      "tree_depth": 6,
+      "min_n": 10,
+      "loss_reduction": 0,
+      "sample_size": 0.8,
+      "mtry": 0.8,
+      "learn_rate": 0.05
+    },
+    "training_time_min": 5.11
+  },
+  "threshold": {
+    "best_threshold": 0.89,
+    "selected_on": "validation",
+    "metric_optimized": "f1",
+    "threshold_grid_size": 297,
+    "threshold_grid_min": 0.0001,
+    "threshold_grid_max": 0.999
+  },
+  "calibration": {
+    "n_bins": 10,
+    "platt_scaling": true,
+    "isotonic_calibration": true,
+    "beta_calibration": true,
+    "default_calibrated_method": "platt",
+    "secondary_calibrated_method": "beta",
+    "benchmark_binary_methods": ["raw", "platt", "beta"],
+    "strict_separation": {
+      "enabled": true,
+      "ratio": 0.5,
+      "calib_fit_dates_range": ["2020-01-01", "2020-03-31"],
+      "calib_fit_n_days": 91,
+      "calib_fit_n_rows": 223587,
+      "threshold_select_dates_range": ["2020-04-01", "2020-06-30"],
+      "threshold_select_n_days": 91,
+      "threshold_select_n_rows": 223587
+    },
+    "raw_use_threshold_select_only": false
+  },
+  "ablation": {
+    "ablation_name": "bench_rs_history_load",
+    "ablation_name_raw": "bench_rs_history_load",
+    "reference_policy_type": "precision_floor",
+    "reference_policy_target": 0.1,
+    "feature_include_regex": "(^ntl_(mean|sum|sd)_built_lag[0-9]+$)|(^ntl_(drop_|below_).*_lag[0-9]+$)|(^nb_(mean|prop|sum)_.*_lag[0-9]+$)|(^(atm|dew|max_dew|min_dew|lai_high|lai_low|rain|rh|skin_temp|temp|wdr|wind_u|wind_v|wsp|max_temp|min_temp)_lag[0-9]+$)|(^has_weather$)|(^(dow|doy|month|year|is_holiday|is_public_holiday|is_weekend|is_covid_period)(_|$))|(^clim_n_obs$)|(^(hist_|cumulative_outage_minutes|days_since_last_outage))|(^built_share_(area|mask)_static$)|(^ntl_log_ratio_(mean|sum)_lag[0-9]+$)|(^moon_fraction$)|(^cenace_)",
+    "feature_exclude_regex": {},
+    "output_root_override": "/Users/armandeaboudrar-meda/Desktop/CMCC/outages_nightlights/mexico/data/baselines/binary_threshold/ablation_batches/20260513_153833",
+    "features_path_override": {},
+    "test_exclude_dates": {},
+    "spatial_holdout_states": {}
+  },
+  "results": {
+    "roc_auc_val": 0.9109,
+    "roc_auc_test": 0.9138,
+    "pr_auc_val": 0.0553,
+    "pr_auc_test": 0.0721,
+    "logloss_val": 0.2054,
+    "logloss_test": 0.2012,
+    "brier_val": 0.0649,
+    "brier_test": 0.063,
+    "ece_equal_val": 0.1358,
+    "ece_equal_test": 0.1308,
+    "ece_quant_val": 0.1358,
+    "ece_quant_test": 0.1308,
+    "ece_quant_val_fallback": false,
+    "ece_quant_test_fallback": false,
+    "logloss_test_platt": 0.0198,
+    "brier_test_platt": 0.0038,
+    "ece_equal_test_platt": 0.0001,
+    "ece_quant_test_platt": 0.0001,
+    "cal_intercept_test_platt": 0.3647,
+    "cal_slope_test_platt": 1.1138,
+    "logloss_test_isotonic": 0.0451,
+    "brier_test_isotonic": 0.004,
+    "ece_equal_test_isotonic": 0.0015,
+    "ece_quant_test_isotonic": 0.004,
+    "cal_intercept_test_isotonic": -5.0719,
+    "cal_slope_test_isotonic": 0.0701,
+    "logloss_test_beta": 0.0198,
+    "brier_test_beta": 0.0038,
+    "ece_equal_test_beta": 0.0001,
+    "ece_quant_test_beta": 0.0002,
+    "cal_intercept_test_beta": 0.5602,
+    "cal_slope_test_beta": 1.1558,
+    "f1_val_at_best_t": 0.1208,
+    "f1_test_at_best_t": 0.1408,
+    "kappa_val_at_best_t": 0.1166,
+    "kappa_test_at_best_t": 0.1362,
+    "alerts_per_day_val": 15.7088,
+    "alerts_per_day_test": 20.2799
+  }
+}

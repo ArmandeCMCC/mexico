@@ -1,0 +1,2 @@
+model,MAE,RMSE,correlation,overdispersion_var_over_mean,n_train,n_test,n_features
+xgb_poisson,0.4865635911437968,1.845268536382276,0.09217748380865019,2.5803791987800127,15951,5350,101
