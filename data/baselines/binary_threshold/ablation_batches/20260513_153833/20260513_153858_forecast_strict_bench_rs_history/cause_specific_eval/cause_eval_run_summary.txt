@@ -1,0 +1,11 @@
+run_id: ablation_batches/20260513_153833/20260513_153858_forecast_strict_bench_rs_history
+method: platt
+policy_type: precision_floor
+policy_target: 0.1
+policy_threshold: 0.061000
+n_eval_rows: 1334135
+n_test_dates: 543
+n_iso_weeks: 79
+n_missing_cause_positive_excluded: 16
+bootstrap_types: row, block (ISO week)
+bootstrap_note: block bootstrap produces more honest CIs under temporal dependence.
