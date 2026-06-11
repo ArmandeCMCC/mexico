@@ -1,0 +1,46 @@
+{
+  "ltr_run_id": "ltr_bench_rs_history_20260611_114112",
+  "headline_run_dir": "/Users/armandeaboudrar-meda/Desktop/CMCC/outages_nightlights/mexico/data/baselines/binary_threshold/ablation_batches/20260513_153833/20260513_153858_forecast_strict_bench_rs_history",
+  "features_path": "/Users/armandeaboudrar-meda/Desktop/CMCC/outages_nightlights/mexico/data/model_ready/features_engineered.rds",
+  "splits_fixed_path": "/Users/armandeaboudrar-meda/Desktop/CMCC/outages_nightlights/mexico/data/model_ready/splits_fixed.rds",
+  "splits": {
+    "train": {
+      "start": "2017-01-01",
+      "end": "2019-12-31"
+    },
+    "val": {
+      "start": "2020-01-01",
+      "end": "2020-06-30"
+    },
+    "test": {
+      "start": "2020-07-01",
+      "end": "2021-12-31"
+    }
+  },
+  "n_train": 2683044,
+  "n_val": 447174,
+  "n_test": 1334151,
+  "test_prevalence": 0.004,
+  "model": {
+    "type": "xgboost",
+    "objective": "rank:pairwise",
+    "eval_metric": "ndcg@10",
+    "n_features": 83,
+    "max_depth": 6,
+    "eta": 0.05,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "nrounds": 500,
+    "early_stopping": 50,
+    "best_iteration": {},
+    "train_time_sec": 116.22,
+    "seed": 42
+  },
+  "topk": {
+    "allocation": "national",
+    "K_values": [1, 2, 5, 10, 20, 30, 50, 100],
+    "n_boot_ci": 1000
+  },
+  "features_match_headline": true,
+  "comparability": "exact"
+}

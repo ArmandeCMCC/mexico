@@ -1,0 +1,17 @@
+LTR rank:pairwise (bench_rs_history feature set) - run summary
+
+Headline run:        20260513_153858_forecast_strict_bench_rs_history
+Comparability:       exact (same panel, same splits, same 83 features)
+Train rows:          2,683,044
+Val rows:            447,174
+Test rows:           1,334,151
+Test prevalence:     0.00401
+Best iteration:      
+Train time (s):      116.2
+
+Top-K (TEST, national allocation):
+  K=10  precision = 0.1374  recall = 0.1394  lift = 34.26  hits = 746
+  K=10  precision 95% CI = [0.1258, 0.1499]   lift 95% CI = [31.37, 37.38]
+
+Top-K (VAL, national allocation):
+  K=10  precision = 0.1126  recall = 0.1209  lift = 29.72  hits = 205
