@@ -1,0 +1,5 @@
+buffer_minutes,positives,share_current_pct,rs_only_status,rs_only_roc,rs_only_pr,rs_hist_roc,rs_hist_pr,delta_roc,delta_pr,rs_only_precision,rs_only_recall,rs_hist_precision,rs_hist_recall,ntl_total_gain_share,outage_history_gain_share,weather_lagged_gain_share
+0,11593,50.4,failed,0.8668,0.0284,0.9125,0.0495,0.0456,0.0211,NA,NA,0.1528,0.0613,12.6,59.6,21.8
+30,12619,54.9,success,0.8719,0.033,0.9156,0.0581,0.0437,0.025,0.0879,0.0837,0.1351,0.1021,12.4,59.6,22.1
+60,13717,59.6,success,0.872,0.0369,0.9161,0.0604,0.0441,0.0235,0.079,0.1069,0.1495,0.0892,11.9,61,21
+120,16817,73.1,success,0.8743,0.0445,0.9164,0.0687,0.0421,0.0242,0.0933,0.1192,0.1102,0.1854,11.5,62.6,19.9
